@@ -19,6 +19,8 @@ if sys.version_info[:2] < (3, 0):
     sys.setdefaultencoding('utf-8')
 
 app_root = os.path.abspath(os.getcwd())
+if not app_root in sys.path:
+    sys.path.append(app_root)
 
 #
 # Configuration
@@ -51,5 +53,5 @@ if __name__ == "__main__":
             monitor.set_streams(config["streams"])
         logging.debug("Starting work")
         monitor.work()
-        time.sleep(config.get("loop_delay", 30))
         break
+        time.sleep(config.get("loop_delay", 30))
