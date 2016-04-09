@@ -5,10 +5,18 @@ from nxtools import *
 from hls import HLSManifest
 
 
+
 class Stream():
     def __init__(self):
         self.url = False
         self.name = False
+        self.meta = {}
+
+    def __getitem__(self, key):
+        return self.meta.get(key, False)
+
+    def __setitem__(self, key, value):
+        self.meta[key] = value
 
     @property
     def default_name(self):
@@ -55,6 +63,12 @@ class HLSMonitor():
         self.streams = []
         self.results = {}
 
+        self.dump_profile = [
+                ["c:v", "copy"],
+                ["c:a", "copy"],
+                ["t", 5]
+            ]
+
     def set_streams(self, data):
         self.streams = []
         for stream_data in data:
@@ -79,8 +93,17 @@ class HLSMonitor():
                 continue
 
             manifest = HLSManifest(parse=manifest_request.content)
+            stream["media_sequence"] = manifest.media_sequence
 
-            print manifest.segments
+            if not ffmpeg(stream.url, "/tmp/monitor.ts", self.dump_profile):
+                self.set_problem(stream.name, "dump_failed")
+
+            result = ffprobe("/tmp/monitor.ts")
+            if not result:
+                self.set_problem(stream.name, "ffprobe_failed")
+
+            stream.meta.update(result)
+
 
             break
 
