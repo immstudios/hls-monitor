@@ -6,9 +6,12 @@ import time
 import json
 import thread
 
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+import rex
 
-from monitor import HLSMonitor
+from nxtools import *
+
+from hlsm import config
+from hlsm import HLSMonitor
 
 #
 # Env setup
@@ -21,36 +24,6 @@ if sys.version_info[:2] < (3, 0):
 app_root = os.path.abspath(os.getcwd())
 if not app_root in sys.path:
     sys.path.append(app_root)
-
-#
-# Vendor imports
-#
-
-vendor_dir = os.path.join(app_root, "vendor")
-if os.path.exists(vendor_dir):
-    for pname in os.listdir(vendor_dir):
-        pname = os.path.join(vendor_dir, pname)
-        pname = os.path.abspath(pname)
-        if not pname in sys.path:
-            sys.path.insert(0, pname)
-
-from nxtools import *
-
-#
-# Configuration
-#
-
-config = {}
-config_last_updated = 0
-
-def update_config():
-    settings_file = os.path.join(app_root, "local_settings.json")
-    if os.path.exists(settings_file):
-        try:
-            config.update(json.load(open(settings_file)))
-        except:
-            log_traceback()
-            critical_error("Unable to parse settings file")
 
 #
 # API Handler
@@ -93,9 +66,6 @@ class MonitorHandler(BaseHTTPRequestHandler):
         result = {}
         self.result(200, json.dumps(result))
 
-#
-# Main loop
-#
 
 if __name__ == "__main__":
     server = HTTPServer(
@@ -107,10 +77,6 @@ if __name__ == "__main__":
 
     while True:
         now = time.time()
-        if now - config_last_updated > config.get("config_update_time", 60):
-            update_config()
-            config_last_updated = now
-            server.monitor.set_streams(config["streams"])
         server.monitor.work()
         time.sleep(config.get("loop_delay", 30))
 

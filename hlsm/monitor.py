@@ -1,10 +1,9 @@
 import time
 import requests
 
-from nxtools import *
 from hls import HLSManifest
 
-
+from .config import *
 
 class Stream():
     def __init__(self):
@@ -54,7 +53,6 @@ class Result():
     @property
     def result(self):
         pass
-
 
 
 
